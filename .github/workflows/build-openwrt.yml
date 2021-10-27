@@ -1,0 +1,78 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build OpenWrt for Raspberry Pi 4B
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+#   push:
+#     branches: [ main ]
+#   pull_request:
+#     branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  
+env:
+  TZ: 'Asia/Shanghai'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-18.04
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Initialization Environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-1804) rdate
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
+          sudo ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+          docker image prune -a -f
+
+      - name: Free Up More Space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 256
+          swap-size-mb: 1024
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          overprovision-lvm: 'true'
+
+      - name: Checkout
+        uses: actions/checkout@main
+        
+      - name: Clone immortalwrt
+        run: |
+          git clone -b openwrt-21.02 --single-branch https://github.com/immortalwrt/immortalwrt openwrt
+          
+      - name: Install feeds
+        run: |
+          pwd
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          
+      - name: Config packages
+        run: | 
+          cat ./config
+        
+      - name: After Script
+        run: |
+          echo "PACKAGED_OUTPUTDATE=$(date +"%Y.%m%d.%H%M")" >> $GITHUB_ENV
+      - name: Upload OpenWrt Firmware to Releases
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: firmware-openwrt-with-docker_${{ env.PACKAGED_OUTPUTDATE }}
+          files: |
+            ${{ github.workspace }}/bin/*.img.gz
+          body_path: ${{ github.workspace }}/configs/${{ env.TXT }}
