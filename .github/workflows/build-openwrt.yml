@@ -1,36 +1,24 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Build OpenWrt for Raspberry Pi 4B
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-#   push:
-#     branches: [ main ]
-#   pull_request:
-#     branches: [ main ]
-
-  # Allows you to run this workflow manually from the Actions tab
+  push:
+    branches: [ main ]
   workflow_dispatch:
   
 env:
   TZ: 'Asia/Shanghai'
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Initialization Environment
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo -E apt-get -qq update
-          sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-1804) rdate
+          sudo -E apt-get -qq install build-essential ccache ecj fastjar file g++ gawk gettext git java-propose-classpath libelf-dev libncurses5-dev libncursesw5-dev libssl-dev python python2.7-dev python3 unzip wget python3-distutils python3-setuptools python3-dev rsync subversion swig time xsltproc zlib1g-dev
           sudo -E apt-get -qq autoremove --purge
           sudo -E apt-get -qq clean
           sudo ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -55,15 +43,33 @@ jobs:
           
       - name: Install feeds
         run: |
-          pwd
           cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           
       - name: Config packages
-        run: | 
-          cat ./config
-        
+        run: |
+          pwd
+          ls -l
+          mv .config ./openwrt/
+          cd openwrt
+          ls -l
+          make defconfig
+          cat .config
+          echo "Free space:"
+          df -h
+      - name: Compile
+        run: |
+          pwd
+          cd openwrt
+          make download -j8
+          make -j$(nproc) || make -j1 V=s
+          mv bin/targets/*/*/*.*.gz ../
+          ls -l
+          cd ../
+          ls -l
+          cd openwrt/bin/targets/
+          
       - name: After Script
         run: |
           echo "PACKAGED_OUTPUTDATE=$(date +"%Y.%m%d.%H%M")" >> $GITHUB_ENV
@@ -72,7 +78,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: firmware-openwrt-with-docker_${{ env.PACKAGED_OUTPUTDATE }}
+          tag_name: ${{ env.PACKAGED_OUTPUTDATE }}
           files: |
-            ${{ github.workspace }}/bin/*.img.gz
-          body_path: ${{ github.workspace }}/configs/${{ env.TXT }}
+            ${{ github.workspace }}/*.img.gz
