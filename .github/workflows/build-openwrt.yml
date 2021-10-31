@@ -65,10 +65,9 @@ jobs:
           make download -j8
           make -j$(nproc) || make -j1 V=s
           mv bin/targets/*/*/*.*.gz ../
-          ls -l
           cd ../
           ls -l
-          cd openwrt/bin/targets/
+          cd openwrt/bin/targets/bcm27xx/
           ls -l
           
       - name: Add Datetime to Env
