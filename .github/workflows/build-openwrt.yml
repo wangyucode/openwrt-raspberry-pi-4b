@@ -69,8 +69,9 @@ jobs:
           cd ../
           ls -l
           cd openwrt/bin/targets/
+          ls -l
           
-      - name: After Script
+      - name: Add Datetime to Env
         run: |
           echo "PACKAGED_OUTPUTDATE=$(date +"%Y.%m%d.%H%M")" >> $GITHUB_ENV
       - name: Upload OpenWrt Firmware to Releases
