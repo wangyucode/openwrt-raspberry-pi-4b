@@ -51,18 +51,14 @@ jobs:
           
       - name: Config packages
         run: |
-          pwd
-          ls -l
           mv .config ./openwrt/
           cd openwrt
-          ls -l
           make defconfig
           cat .config
           echo "Free space:"
           df -h
       - name: Compile
         run: |
-          pwd
           cd openwrt
           make download -j8
           make -j$(nproc) || make -j1 V=s
