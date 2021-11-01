@@ -4,6 +4,8 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  schedule:
+    - cron: 53 2 * * 2
   
 env:
   TZ: 'Asia/Shanghai'
