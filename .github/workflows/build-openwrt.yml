@@ -60,12 +60,11 @@ jobs:
       - name: Compile
         run: |
           cd openwrt
-          make download -j8
-          make -j$(nproc) || make -j1 V=s
+          make -j$(nproc) download clean world
           mv bin/targets/*/*/*.*.gz ../
           cd ../
           ls -l
-          
+
       - name: Add Datetime to Env
         run: |
           cd openwrt/bin/targets/bcm27xx/bcm2711
