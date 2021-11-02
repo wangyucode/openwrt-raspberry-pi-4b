@@ -25,7 +25,7 @@ jobs:
           sudo -E apt-get -qq clean
           sudo ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
           docker image prune -a -f
-          echo "PACKAGED_OUTPUTDATE=$(date +"%Y.%m%d.%H%M")" >> $GITHUB_ENV
+          
 
       - name: Free Up More Space
         uses: easimon/maximize-build-space@master
@@ -42,6 +42,10 @@ jobs:
         
       - name: Clone immortalwrt
         run: |
+          date
+          echo "PACKAGED_OUTPUTDATE=$(date +"%Y.%m%d.%H%M")" >> $GITHUB_ENV
+          echo "Free space:"
+          df -h
           git clone -b openwrt-21.02 --single-branch https://github.com/immortalwrt/immortalwrt openwrt
           
       - name: Install feeds
@@ -50,25 +54,12 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           
-      - name: Config packages
-        run: |
-          mv .config ./openwrt/
-          cd openwrt
-          make defconfig
-          cat .config
-          echo "Free space:"
-          df -h
       - name: Compile
         run: |
+          cp .config ./openwrt/
           cd openwrt
-          make -j$(nproc) download clean world
+          make -j$(nproc) defconfig download clean world
 
-      - name: Show Result
-        run: |
-          cd openwrt/bin/targets/bcm27xx/bcm2711
-          ls -l
-          cd packages
-          ls -l
       - name: Upload OpenWrt Firmware to Releases
         uses: softprops/action-gh-release@v1
         env:
@@ -77,4 +68,3 @@ jobs:
           tag_name: ${{ env.PACKAGED_OUTPUTDATE }}
           files: |
             ${{ github.workspace }}/openwrt/bin/targets/bcm27xx/bcm2711/*
-            ${{ github.workspace }}/openwrt/bin/targets/bcm27xx/bcm2711/packages/*
