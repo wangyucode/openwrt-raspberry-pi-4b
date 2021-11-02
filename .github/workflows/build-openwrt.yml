@@ -25,6 +25,7 @@ jobs:
           sudo -E apt-get -qq clean
           sudo ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
           docker image prune -a -f
+          echo "PACKAGED_OUTPUTDATE=$(date +"%Y.%m%d.%H%M")" >> $GITHUB_ENV
 
       - name: Free Up More Space
         uses: easimon/maximize-build-space@master
@@ -61,15 +62,13 @@ jobs:
         run: |
           cd openwrt
           make -j$(nproc) download clean world
-          mv bin/targets/*/*/*.*.gz ../
-          cd ../
-          ls -l
 
-      - name: Add Datetime to Env
+      - name: Show Result
         run: |
           cd openwrt/bin/targets/bcm27xx/bcm2711
           ls -l
-          echo "PACKAGED_OUTPUTDATE=$(date +"%Y.%m%d.%H%M")" >> $GITHUB_ENV
+          cd packages
+          ls -l
       - name: Upload OpenWrt Firmware to Releases
         uses: softprops/action-gh-release@v1
         env:
@@ -77,4 +76,5 @@ jobs:
         with:
           tag_name: ${{ env.PACKAGED_OUTPUTDATE }}
           files: |
-            ${{ github.workspace }}/*.img.gz
+            ${{ github.workspace }}/openwrt/bin/targets/bcm27xx/bcm2711/*
+            ${{ github.workspace }}/openwrt/bin/targets/bcm27xx/bcm2711/packages/*
