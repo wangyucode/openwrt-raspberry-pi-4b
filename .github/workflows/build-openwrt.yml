@@ -59,6 +59,7 @@ jobs:
           cp .config ./openwrt/
           cd openwrt
           make -j$(nproc) defconfig download clean world
+          cat .config
 
       - name: Upload OpenWrt Firmware to Releases
         uses: softprops/action-gh-release@v1
