@@ -1,8 +1,6 @@
 name: Build OpenWrt for Raspberry Pi 4B
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
   schedule:
     - cron: 53 2 * * 2
