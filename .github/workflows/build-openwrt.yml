@@ -54,7 +54,7 @@ jobs:
         run: |
           cp .config ./openwrt/
           cd openwrt
-          make -j$(nproc) defconfig
+          make -j$(nproc) defconfig download clean world
           cat .config
 
       - name: Upload OpenWrt Firmware to Releases
